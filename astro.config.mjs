@@ -3,6 +3,6 @@ import react from '@astrojs/react';
 
 export default defineConfig({
   site: 'https://hiiragi-GameDev.github.io',
-  base: '/VetAnchorDemo',
+  base: '/VetAnchorDemo/',
   integrations: [react()],
 });

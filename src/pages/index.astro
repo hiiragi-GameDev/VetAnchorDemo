@@ -1,6 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import Bubbles from '../components/Bubbles';
+const base = import.meta.env.BASE_URL;
 ---
 
 <Layout title="VetAnchor - 動物医療ギルドボード">
@@ -24,7 +25,7 @@ import Bubbles from '../components/Bubbles';
     <!-- 掲示板選択 -->
     <div class="board-grid">
 
-      <a href="/board/vet" class="signboard">
+      <a href={`${base}board/vet`} class="signboard">
         <div class="chain chain-left"></div>
         <div class="chain chain-right"></div>
         <div class="signboard-icon">🩺</div>
@@ -35,7 +36,7 @@ import Bubbles from '../components/Bubbles';
         </p>
       </a>
 
-      <a href="/board/nurse" class="signboard">
+      <a href={`${base}board/nurse`} class="signboard">
         <div class="chain chain-left"></div>
         <div class="chain chain-right"></div>
         <div class="signboard-icon">💉</div>
@@ -46,7 +47,7 @@ import Bubbles from '../components/Bubbles';
         </p>
       </a>
 
-      <a href="/board/student" class="signboard">
+      <a href={`${base}board/student`} class="signboard">
         <div class="chain chain-left"></div>
         <div class="chain chain-right"></div>
         <div class="signboard-icon">🐾</div>
