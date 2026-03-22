@@ -1,0 +1,73 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Bubbles from '../components/Bubbles';
+---
+
+<Layout title="VetAnchor - 動物医療ギルドボード">
+  <Bubbles client:load />
+
+  <main style="max-width: 1000px; margin: 0 auto; padding: 56px 16px 32px; position: relative; z-index: 1; min-height: 85vh; display: flex; flex-direction: column; align-items: center;">
+
+    <!-- ロゴ -->
+    <div style="margin-bottom: 52px; text-align: center;">
+      <h1 class="hero-title">VetAnchor</h1>
+      <p class="hero-subtitle">〜 全動物関連ギルドボード 〜</p>
+    </div>
+
+    <!-- ギルドマスターメッセージ -->
+    <div class="guild-message">
+      「よく来たな、ハンターよ。ここは動物医療の依頼が集まるギルドだ。<br />
+      動物病院から一般企業、行政まで、あらゆる動物関連の依頼が掲示されている。<br />
+      自分の職種の掲示板を見るがいい。」
+    </div>
+
+    <!-- 掲示板選択 -->
+    <div class="board-grid">
+
+      <a href="/board/vet" class="signboard">
+        <div class="chain chain-left"></div>
+        <div class="chain chain-right"></div>
+        <div class="signboard-icon">🩺</div>
+        <h3 class="signboard-title">獣医師</h3>
+        <div class="signboard-divider"></div>
+        <p class="signboard-desc">
+          臨床、行政、企業案件まで<br />高度な資格を活かす任務だ。
+        </p>
+      </a>
+
+      <a href="/board/nurse" class="signboard">
+        <div class="chain chain-left"></div>
+        <div class="chain chain-right"></div>
+        <div class="signboard-icon">💉</div>
+        <h3 class="signboard-title">愛玩動物看護師</h3>
+        <div class="signboard-divider"></div>
+        <p class="signboard-desc">
+          医療現場の要から<br />保護施設の護衛まで幅広いぞ。
+        </p>
+      </a>
+
+      <a href="/board/student" class="signboard">
+        <div class="chain chain-left"></div>
+        <div class="chain chain-right"></div>
+        <div class="signboard-icon">🐾</div>
+        <h3 class="signboard-title">学生ハンター</h3>
+        <div class="signboard-divider"></div>
+        <p class="signboard-desc">
+          動物園やイベントなど<br />次世代を担う君向けの任務だ。
+        </p>
+      </a>
+
+    </div>
+
+    <!-- サービス説明 -->
+    <div class="about-section">
+      <p class="about-title">VetAnchor とは？</p>
+      <div class="about-text">
+        <p>獣医師・愛玩動物看護師・獣医学生・動物看護学生のための<br />クエスト型求人マッチングサービスです。</p>
+        <p style="margin-top: 10px;">単発・短期の求人を「クエスト」として掲示し、<br />あなたのスキルと時間に合った仕事を見つけることができます。</p>
+        <p class="about-note">※ 本サービスは求人情報の紹介を行うものであり、直接の雇用契約は求人企業・団体との間で締結されます。</p>
+      </div>
+    </div>
+
+  </main>
+</Layout>

@@ -1,0 +1,673 @@
+import React, { useState, useEffect } from 'react';
+
+const styles = `
+  @import url('https://fonts.googleapis.com/css2?family=Kaisei+Decol:wght@400;700&family=Yuji+Syuku&display=swap');
+
+  body {
+    background-color: #051320;
+    margin: 0;
+  }
+
+  /* 海や深海をイメージした背景スタイル */
+  .ocean-bg {
+    background-color: #051324;
+    background-image: 
+      radial-gradient(circle at 50% -20%, #0d47a1 0%, transparent 60%),
+      linear-gradient(to bottom, #051324 0%, #010812 100%);
+    min-height: 100vh;
+    padding-bottom: 40px;
+  }
+
+  /* 巨大なロゴ風タイトル（海・クリスタル風グラデーション） */
+  .hero-title {
+    font-family: 'Kaisei Decol', serif;
+    font-size: clamp(3rem, 8vw, 6rem);
+    font-weight: 700;
+    background: linear-gradient(to bottom, #ffffff, #81d4fa 40%, #0288d1 60%, #01579b);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0px 8px 12px rgba(0,0,0,0.9)) drop-shadow(0px 0px 4px rgba(129,212,250,0.4));
+    text-align: center;
+    line-height: 1.2;
+    margin-bottom: 0.5rem;
+    letter-spacing: 0.05em;
+  }
+
+  /* 羊皮紙風のクエストカードスタイル（※ここは変更なし） */
+  .parchment-card {
+    background-color: #e8d3b9;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.12'/%3E%3C/svg%3E");
+    box-shadow: 5px 5px 15px rgba(0,0,0,0.6), inset 0 0 30px rgba(139, 69, 19, 0.3);
+    position: relative;
+    border: 2px solid #5c3a21;
+    font-family: 'Yuji Syuku', serif;
+    color: #3a2212;
+    transition: transform 0.2s;
+  }
+
+  .parchment-card:hover {
+    transform: translateY(-2px);
+  }
+  
+  .parchment-inner-border {
+    border: 1px solid #8b5a2b;
+    margin: 6px;
+    padding: 24px;
+    height: calc(100% - 12px);
+    box-sizing: border-box;
+    position: relative;
+  }
+
+  .corner-ornament {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border: 3px solid #5c3a21;
+  }
+  .corner-tl { top: -2px; left: -2px; border-right: none; border-bottom: none; }
+  .corner-tr { top: -2px; right: -2px; border-left: none; border-bottom: none; }
+  .corner-bl { bottom: -2px; left: -2px; border-right: none; border-top: none; }
+  .corner-br { bottom: -2px; right: -2px; border-left: none; border-top: none; }
+
+  .quest-title {
+    font-family: 'Kaisei Decol', serif;
+    font-weight: 700;
+    color: #2d1a0d;
+  }
+
+  /* 分野バッジ */
+  .field-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    border: 1px solid currentColor;
+    font-family: sans-serif;
+  }
+  .field-small { color: #2e7d32; background: #e8f5e9; border-color: #2e7d32; }
+  .field-large { color: #c62828; background: #ffebee; border-color: #c62828; }
+  .field-public { color: #1565c0; background: #e3f2fd; border-color: #1565c0; }
+  .field-corp { color: #ef6c00; background: #fff3e0; border-color: #ef6c00; }
+  .field-other { color: #6a1b9a; background: #f3e5f5; border-color: #6a1b9a; }
+  
+  /* カード内の受注済スタンプ */
+  .quest-stamp {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    border: 4px double #b71c1c;
+    color: #b71c1c;
+    font-family: 'Kaisei Decol', serif;
+    font-weight: 900;
+    font-size: 2.5rem;
+    padding: 8px 24px;
+    border-radius: 8px;
+    transform: translate(-50%, -50%) rotate(-10deg);
+    pointer-events: none;
+    z-index: 10;
+    opacity: 0.85;
+  }
+
+  /* 全画面の受注アニメーション */
+  .accept-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    animation: fadeIn 0.2s ease-out forwards;
+  }
+  .accept-stamp-huge {
+    border: 8px double #b71c1c;
+    color: #b71c1c;
+    font-family: 'Kaisei Decol', serif;
+    font-weight: 900;
+    font-size: 5rem;
+    padding: 20px 60px;
+    border-radius: 16px;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 0 40px rgba(183, 28, 28, 0.5);
+    animation: stampHugeIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  }
+
+  @keyframes stampHugeIn {
+    0% { opacity: 0; transform: scale(3) rotate(25deg); }
+    100% { opacity: 1; transform: scale(1) rotate(-10deg); }
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  /* クエストカード内のボタン（変更なし） */
+  .guild-button {
+    background: linear-gradient(to bottom, #724726, #4a2c15);
+    color: #f4e4c1;
+    border: 2px solid #2d1a0d;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), 0 4px 0 #2d1a0d;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+    transition: all 0.1s;
+  }
+  .guild-button:active {
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), 0 0px 0 #2d1a0d;
+    transform: translateY(4px);
+  }
+  .guild-button:disabled {
+    background: #555;
+    color: #888;
+    box-shadow: 0 4px 0 #222;
+    cursor: not-allowed;
+  }
+
+  /* 港の看板風ボードスタイル（海テーマ） */
+  .signboard {
+    background-color: #e1f5fe;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+    border: 8px solid #0277bd;
+    border-radius: 6px;
+    box-shadow: 5px 5px 15px rgba(0,0,0,0.6), inset 0 0 30px rgba(2, 119, 189, 0.2);
+    position: relative;
+    transition: all 0.2s;
+    cursor: pointer;
+    font-family: 'Kaisei Decol', serif;
+    margin-top: 20px;
+  }
+  .signboard:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 8px 8px 20px rgba(0,0,0,0.7), inset 0 0 30px rgba(2, 119, 189, 0.4);
+    border-color: #01579b;
+  }
+  .signboard:active {
+    transform: translateY(2px) scale(0.98);
+  }
+
+  /* 鎖の装飾（シルバー・アイアン風） */
+  .chain {
+    position: absolute;
+    top: -30px;
+    width: 8px;
+    height: 35px;
+    background: repeating-linear-gradient(0deg, #90a4ae, #90a4ae 4px, #546e7a 4px, #546e7a 8px);
+    border-radius: 4px;
+    box-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+  }
+  .chain-left { left: 20%; }
+  .chain-right { right: 20%; }
+
+  /* プレイヤーステータスUI（海テーマ） */
+  .player-status {
+    background: rgba(1, 8, 18, 0.85);
+    border: 2px solid #0288d1;
+    border-radius: 4px;
+    padding: 8px 16px;
+    color: #e1f5fe;
+    font-family: sans-serif;
+    font-size: 0.85rem;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.5);
+    display: flex;
+    gap: 16px;
+    align-items: center;
+  }
+  .status-item {
+    display: flex;
+    flex-direction: column;
+  }
+  .status-label {
+    font-size: 0.65rem;
+    color: #81d4fa;
+    text-transform: uppercase;
+  }
+  .status-value {
+    font-weight: bold;
+    font-family: 'Kaisei Decol', serif;
+    font-size: 1.1rem;
+  }
+`;
+
+// 分野情報とスタイルのマッピング
+const fieldConfig = {
+  '小動物臨床': 'field-small',
+  '産業動物(大動物)': 'field-large',
+  '行政/公務': 'field-public',
+  '一般企業': 'field-corp',
+  '展示/その他': 'field-other',
+};
+
+// クエストのモックデータ（様々な分野を網羅）
+const questData = [
+  // --- 獣医師クエスト ---
+  {
+    id: 1,
+    category: '獣医師',
+    field: '行政/公務',
+    type: '【納品クエスト】',
+    title: '地域の狂犬病集合注射',
+    difficulty: 2,
+    deadline: '2026/4/20 12:00',
+    location: '××区民センター',
+    reward: '日給 20,000円',
+    conditions: ['① 問診および健康状態の確認', '② ワクチン接種の実施'],
+    comment: '春の集合注射シーズン到来だ。地域への貢献度が高い行政からの依頼だぞ。犬たちのストレスに配慮しつつ、安全第一で納品（接種）を完了させてくれ！',
+  },
+  {
+    id: 2,
+    category: '獣医師',
+    field: '小動物臨床',
+    type: '【高難度クエスト】',
+    title: '夜間救急のオペ助手',
+    difficulty: 8,
+    deadline: '2026/3/25 05:00',
+    location: '△△夜間救急動物病院',
+    reward: '日給 35,000円',
+    conditions: ['① 緊急手術の助手', '② ICU入院管理'],
+    comment: '急患増加につき、臨床経験のある先生を急募します。一刻を争う事態だ。腕に自信のあるハンター…いや、獣医師の先生方のご協力を求む！',
+  },
+  {
+    id: 3,
+    category: '獣医師',
+    field: '産業動物(大動物)',
+    type: '【調査クエスト】',
+    title: '牧場での牛の健康診断',
+    difficulty: 6,
+    deadline: '2026/5/10 17:00',
+    location: '◇◇ファーム（千葉県）',
+    reward: '日給 25,000円 ＋ 現地のお肉',
+    conditions: ['① 直腸検査・エコー検査', '② 採血・検便の実施'],
+    comment: '広大なフィールドでの調査任務だ。大型動物相手の体力勝負になるが、大自然の中での仕事は格別だぞ。報酬の特選和牛も楽しみにしていてくれ！',
+  },
+  {
+    id: 4,
+    category: '獣医師',
+    field: '一般企業',
+    type: '【解析クエスト】',
+    title: 'ペット保険の医療査定アドバイザー',
+    difficulty: 4,
+    deadline: '2026/4/30 18:00',
+    location: 'オンライン（リモートワーク）',
+    reward: '時給 4,000円',
+    conditions: ['① 請求された診療明細の妥当性チェック', '② 専門的見地からの査定コメント入力'],
+    comment: '保険会社からの依頼だ。送られてくる膨大な診療記録を解析し、適正な保険金支払いをサポートしてほしい。臨床経験と知識が武器になる任務だ。',
+  },
+  {
+    id: 5,
+    category: '獣医師',
+    field: '行政/公務',
+    type: '【防衛クエスト】',
+    title: '空港動物検疫所のサポート業務',
+    difficulty: 5,
+    deadline: '2026/5/05 16:00',
+    location: '〇〇国際空港 検疫所',
+    reward: '日給 22,000円',
+    conditions: ['① 輸入される伴侶動物のマイクロチップ照合', '② 臨床症状（感染症兆候）の有無確認'],
+    comment: '水際対策の最前線だ！海外からの未知の病原体の侵入を防ぐ、極めて重要な防衛任務。語学力があるとなお良し！日本の生態系を守り抜け！',
+  },
+
+  // --- 愛玩動物看護師クエスト ---
+  {
+    id: 11,
+    category: '愛玩動物看護師',
+    field: '小動物臨床',
+    type: '【支援クエスト】',
+    title: '歯科処置の麻酔管理サポート',
+    difficulty: 7,
+    deadline: '2026/4/08 14:00',
+    location: 'スマイル動物病院',
+    reward: '時給 2,000円',
+    conditions: ['① 全身麻酔のモニタリング', '② 獣医師への器具出し'],
+    comment: '長時間の歯科処置において、安全な麻酔管理は生命線だ。バイタルサインの僅かな変化も見逃さない、凄腕のサポーターを募集している！',
+  },
+  {
+    id: 12,
+    category: '愛玩動物看護師',
+    field: '一般企業',
+    type: '【調合クエスト】',
+    title: '新開発ペットフードの嗜好性テスト補佐',
+    difficulty: 3,
+    deadline: '2026/4/25 15:00',
+    location: '株式会社〇〇フーズ 研究所',
+    reward: '日給 14,000円',
+    conditions: ['① テスト犬・猫への給餌と反応記録', '② 排便状態等のデータ収集'],
+    comment: '大手フードメーカーからの依頼だ。新開発された「秘薬（フード）」の効果と食いつきを検証する。動物の小さなサインを読み取る観察眼を貸してくれ！',
+  },
+  {
+    id: 13,
+    category: '愛玩動物看護師',
+    field: '行政/公務',
+    type: '【護衛クエスト】',
+    title: '保健所での保護犬・猫譲渡会サポート',
+    difficulty: 4,
+    deadline: '2026/5/12 16:00',
+    location: '県立動物愛護センター',
+    reward: '日給 12,000円',
+    conditions: ['① 参加動物の体調チェック・ストレス管理', '② 里親希望者への飼育アドバイス'],
+    comment: '新たな家族との出会いを繋ぐクエストだ。不慣れな環境で緊張する動物たちを護衛しつつ、里親へ正しい知識を伝授してやってくれ！',
+  },
+  {
+    id: 14,
+    category: '愛玩動物看護師',
+    field: '展示/その他',
+    type: '【拠点防衛クエスト】',
+    title: '猫カフェの衛生管理・スタッフ指導',
+    difficulty: 5,
+    deadline: '2026/4/18 13:00',
+    location: '猫カフェ「肉球」',
+    reward: '時給 1,800円',
+    conditions: ['① 店舗の感染症対策チェック', '② アルバイトへの保定・ケア指導'],
+    comment: '街の癒しスポット（猫カフェ）の防衛任務だ。プロの目線で衛生基準を見直し、店舗スタッフのレベルアップを図ってほしい。',
+  },
+
+  // --- 学生クエスト ---
+  {
+    id: 21,
+    category: '学生',
+    field: '小動物臨床',
+    type: '【清掃クエスト】',
+    title: '入院室の徹底清掃と見学',
+    difficulty: 2,
+    deadline: '2026/4/06 12:00',
+    location: '中央動物医療センター',
+    reward: '時給 1,200円 ＋ 現場見学',
+    conditions: ['① ケージの洗浄・消毒', '② 洗濯物の処理'],
+    comment: '衛生環境の維持は医療の基本だ！激戦区をピカピカに磨き上げ、次なる患者を迎え入れる準備をしてくれ！空き時間は実際の診療を見学できるぞ！',
+  },
+  {
+    id: 22,
+    category: '学生',
+    field: '展示/その他',
+    type: '【運搬クエスト】',
+    title: '動物園での飼育員補助・エサ運び',
+    difficulty: 3,
+    deadline: '2026/5/03 16:00',
+    location: '市立〇〇動物園',
+    reward: '日給 8,000円',
+    conditions: ['① 草食動物用飼料の運搬・計量', '② バックヤードの清掃'],
+    comment: '多種多様なモンスター…いや、動物たちが暮らす園での任務だ！大量の飼料を運ぶ体力勝負になるが、普段見られないバックヤードに入れる貴重な機会だぞ。',
+  },
+  {
+    id: 23,
+    category: '学生',
+    field: '一般企業',
+    type: '【記録クエスト】',
+    title: 'ペット用品展示会のブース運営補佐',
+    difficulty: 1,
+    deadline: '2026/4/29 17:00',
+    location: '東京ビッグサイト',
+    reward: '日給 10,000円',
+    conditions: ['① サンプルの配布', '② 来場者アンケートの回収'],
+    comment: '最新のペット関連装備（グッズ）が集まる大規模な市場（展示会）での任務だ！多くの来場者にアピールし、ギルド（企業）の知名度アップに貢献してくれ！',
+  },
+  {
+    id: 24,
+    category: '学生',
+    field: '行政/公務',
+    type: '【調査クエスト】',
+    title: '野生鳥獣の生息状況モニタリング調査補助',
+    difficulty: 4,
+    deadline: '2026/5/20 15:00',
+    location: '〇〇県 山間部',
+    reward: '日給 9,000円 ＋ 交通費',
+    conditions: ['① センサーカメラの設置・データ回収', '② フィールドサイン（足跡・フン）の記録'],
+    comment: '大自然のフィールドワークだ！行政機関と連携し、野生動物の生態系を調査する。道なき道を進む覚悟はあるか？アウトドア派の学生ハンター求む！',
+  }
+];
+
+export default function App() {
+  const [acceptedQuests, setAcceptedQuests] = useState([]);
+  const [currentView, setCurrentView] = useState('home'); // 'home' | 'board'
+  const [activeCategory, setActiveCategory] = useState(null);
+  const [showAcceptAnimation, setShowAcceptAnimation] = useState(false);
+
+  // クエスト受注処理
+  const handleAccept = (id) => {
+    if (!acceptedQuests.includes(id)) {
+      setShowAcceptAnimation(true);
+      setTimeout(() => {
+        setAcceptedQuests([...acceptedQuests, id]);
+        setShowAcceptAnimation(false);
+      }, 1500); // 1.5秒間アニメーションを表示
+    }
+  };
+
+  // 掲示板を開く
+  const handleOpenBoard = (category) => {
+    setActiveCategory(category);
+    setCurrentView('board');
+    window.scrollTo(0, 0);
+  };
+
+  // ホームに戻る
+  const handleBackToHome = () => {
+    setCurrentView('home');
+    setActiveCategory(null);
+    window.scrollTo(0, 0);
+  };
+
+  // 難易度の星
+  const renderStars = (difficulty) => {
+    const maxStars = 10;
+    let stars = '';
+    for (let i = 0; i < maxStars; i++) {
+      stars += i < difficulty ? '★' : '☆';
+    }
+    return stars;
+  };
+
+  // フィルター処理
+  const filteredQuests = questData.filter(quest => {
+    if (!activeCategory) return false;
+    return quest.category === activeCategory;
+  });
+
+  return (
+    <>
+      <style>{styles}</style>
+      <div className="ocean-bg min-h-screen font-sans relative">
+        
+        {/* 受注完了の全画面演出 */}
+        {showAcceptAnimation && (
+          <div className="accept-overlay">
+            <div className="accept-stamp-huge">
+              QUEST<br/>ACCEPTED
+            </div>
+          </div>
+        )}
+
+        {/* ヘッダー部分 */}
+        <header className="bg-[#010812] border-b-4 border-[#0288d1] py-3 px-4 md:px-6 shadow-xl sticky top-0 z-40 flex justify-between items-center">
+          
+          {/* 左側：戻るボタン または ミニロゴ */}
+          <div>
+            {currentView === 'board' ? (
+              <button 
+                onClick={handleBackToHome}
+                className="bg-[#01579b] text-[#e1f5fe] px-4 py-2 rounded font-bold border-2 border-[#0288d1] hover:bg-[#0277bd] transition-colors flex items-center shadow-lg text-sm md:text-base"
+              >
+                ◀ ギルドロビー
+              </button>
+            ) : (
+              <div className="text-[#0288d1] font-bold font-['Kaisei_Decol'] text-xl hidden md:block">
+                Veterinary Guild
+              </div>
+            )}
+          </div>
+
+          {/* 右側：ハンターステータス */}
+          <div className="player-status">
+            <div className="status-item">
+              <span className="status-label">HUNTER</span>
+              <span className="status-value text-xs md:text-base">ゲストハンター</span>
+            </div>
+            <div className="w-px h-8 bg-[#0288d1]"></div>
+            <div className="status-item">
+              <span className="status-label">RANK</span>
+              <span className="status-value text-[#81d4fa]">HR 1</span>
+            </div>
+            <div className="w-px h-8 bg-[#0288d1] hidden md:block"></div>
+            <div className="status-item hidden md:flex">
+              <span className="status-label">QUESTS</span>
+              <span className="status-value">{acceptedQuests.length}</span>
+            </div>
+          </div>
+        </header>
+
+        {/* ホーム画面（掲示板選択ロビー） */}
+        {currentView === 'home' && (
+          <main className="max-w-5xl mx-auto px-4 py-12 flex flex-col items-center min-h-[85vh]">
+            
+            {/* 巨大なロゴ */}
+            <div className="mb-12 text-center animate-[fadeIn_1s_ease-in]">
+              <h1 className="hero-title">VetAnchor</h1>
+              <p className="text-[#81d4fa] font-bold tracking-widest text-lg md:text-xl font-['Yuji_Syuku'] mt-2">
+                〜 全動物関連ギルドボード 〜
+              </p>
+            </div>
+            
+            <div className="text-[#b3e5fc] text-center mb-10 font-bold bg-[#010812] bg-opacity-70 py-3 px-6 rounded-lg border border-[#0288d1] max-w-2xl shadow-lg">
+              「よく来たな。動物病院から一般企業、行政まで、あらゆる動物関連の依頼が集まっている。自分の職種の掲示板を見るがいい。」
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-4xl">
+              
+              {/* 獣医師ボード */}
+              <div className="signboard flex flex-col items-center justify-center py-10 px-4" onClick={() => handleOpenBoard('獣医師')}>
+                <div className="chain chain-left"></div>
+                <div className="chain chain-right"></div>
+                <div className="text-5xl mb-4 drop-shadow-md">🩺</div>
+                <h3 className="text-3xl font-bold text-[#01579b] mb-2">獣医師</h3>
+                <div className="w-16 h-1 bg-[#0288d1] mb-4"></div>
+                <p className="text-[#004d40] font-bold text-center text-sm md:text-base leading-relaxed">
+                  臨床、行政、企業案件まで<br/>高度な資格を活かす任務だ。
+                </p>
+              </div>
+
+              {/* 愛玩動物看護師ボード */}
+              <div className="signboard flex flex-col items-center justify-center py-10 px-4" onClick={() => handleOpenBoard('愛玩動物看護師')}>
+                <div className="chain chain-left"></div>
+                <div className="chain chain-right"></div>
+                <div className="text-5xl mb-4 drop-shadow-md">💉</div>
+                <h3 className="text-3xl font-bold text-[#01579b] mb-2">愛玩動物看護師</h3>
+                <div className="w-16 h-1 bg-[#0288d1] mb-4"></div>
+                <p className="text-[#004d40] font-bold text-center text-sm md:text-base leading-relaxed">
+                  医療現場の要から<br/>保護施設の護衛まで幅広いぞ。
+                </p>
+              </div>
+
+              {/* 学生ボード */}
+              <div className="signboard flex flex-col items-center justify-center py-10 px-4" onClick={() => handleOpenBoard('学生')}>
+                <div className="chain chain-left"></div>
+                <div className="chain chain-right"></div>
+                <div className="text-5xl mb-4 drop-shadow-md">🐾</div>
+                <h3 className="text-3xl font-bold text-[#01579b] mb-2">学生ハンター</h3>
+                <div className="w-16 h-1 bg-[#0288d1] mb-4"></div>
+                <p className="text-[#004d40] font-bold text-center text-sm md:text-base leading-relaxed">
+                  動物園やイベントなど<br/>次世代を担う君向けの任務だ。
+                </p>
+              </div>
+
+            </div>
+          </main>
+        )}
+
+        {/* クエストボード（リスト画面） */}
+        {currentView === 'board' && (
+          <main className="max-w-4xl mx-auto px-4 py-8">
+            <div className="mb-8 text-center">
+              <h2 className="quest-title text-3xl md:text-4xl text-[#e1f5fe] inline-block border-b-2 border-dashed border-[#0288d1] pb-2 px-8 bg-[#010812] bg-opacity-70 rounded-lg shadow-lg">
+                【 {activeCategory} 】 掲示板
+              </h2>
+            </div>
+
+            <div className="space-y-8">
+              {filteredQuests.map((quest) => (
+                <div key={quest.id} className="parchment-card w-full rounded-sm">
+                  
+                  {/* 受注済スタンプ（カード内） */}
+                  {acceptedQuests.includes(quest.id) && (
+                    <div className="quest-stamp">QUEST<br/>ACCEPTED</div>
+                  )}
+
+                  <div className="parchment-inner-border">
+                    {/* 四隅の飾り */}
+                    <div className="corner-ornament corner-tl"></div>
+                    <div className="corner-ornament corner-tr"></div>
+                    <div className="corner-ornament corner-bl"></div>
+                    <div className="corner-ornament corner-br"></div>
+
+                    {/* タイトルエリア */}
+                    <div className="text-center mb-6 mt-2 border-b-2 border-dashed border-[#8b5a2b] pb-4 relative">
+                      {/* 分野バッジ */}
+                      <div className="absolute top-0 left-0 md:left-2">
+                        <span className={`field-badge ${fieldConfig[quest.field] || 'field-other'}`}>
+                          {quest.field}
+                        </span>
+                      </div>
+                      
+                      <h2 className="quest-title text-2xl md:text-3xl mb-2 tracking-widest mt-6 md:mt-0">{quest.type}</h2>
+                      <p className="quest-title text-xl md:text-2xl">〜 {quest.title} 〜</p>
+                    </div>
+                    
+                    {/* 詳細情報エリア */}
+                    <div className="flex flex-col md:flex-row gap-6 md:gap-12 text-[15px] md:text-[16px] font-bold leading-relaxed">
+                      
+                      {/* 左カラム */}
+                      <div className="flex-1 space-y-3">
+                        <div className="flex items-start">
+                          <span className="w-24 shrink-0 text-[#5c3a21]">難易度：</span>
+                          <span className="tracking-widest text-[#2d1a0d]">{renderStars(quest.difficulty)}</span>
+                        </div>
+                        <div className="flex items-start">
+                          <span className="w-24 shrink-0 text-[#5c3a21]">制限時間：</span>
+                          <span>〜 {quest.deadline}</span>
+                        </div>
+                        <div className="flex items-start">
+                          <span className="w-24 shrink-0 text-[#5c3a21]">目的地：</span>
+                          <span>{quest.location}</span>
+                        </div>
+                        <div className="flex items-start">
+                          <span className="w-24 shrink-0 text-[#5c3a21]">報酬：</span>
+                          <span className="text-[#8b0000]">{quest.reward}</span>
+                        </div>
+                      </div>
+                      
+                      {/* 右カラム */}
+                      <div className="flex-1 space-y-5">
+                        <div>
+                          <span className="text-[#5c3a21] block mb-1">達成条件：</span>
+                          <ul className="space-y-1 ml-2">
+                            {quest.conditions.map(c => <li key={c}>{c}</li>)}
+                          </ul>
+                        </div>
+                        <div>
+                          <span className="text-[#5c3a21] block mb-1">依頼者コメント：</span>
+                          <p className="ml-2 bg-[#d8c2a4] bg-opacity-40 p-3 rounded border border-[#c4a98a]">
+                            {quest.comment}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* アクションボタンエリア */}
+                    <div className="mt-8 text-center pt-4">
+                       <button 
+                         className="guild-button px-10 py-4 font-bold rounded text-lg tracking-widest w-full md:w-auto min-w-[300px]"
+                         onClick={() => handleAccept(quest.id)}
+                         disabled={acceptedQuests.includes(quest.id)}
+                       >
+                         {acceptedQuests.includes(quest.id) ? '受注済み' : 'クエストを受注する'}
+                       </button>
+                    </div>
+
+                  </div>
+                </div>
+              ))}
+            </div>
+          </main>
+        )}
+      </div>
+    </>
+  );
+}

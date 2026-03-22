@@ -1,0 +1,12 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import QuestBoard from '../../components/QuestBoard';
+import Bubbles from '../../components/Bubbles';
+---
+
+<Layout title="学生ハンター 掲示板 | VetAnchor" showBack={true}>
+  <Bubbles client:load />
+  <main class="container" style="padding-top: 32px; padding-bottom: 32px; position: relative; z-index: 1;">
+    <QuestBoard client:load category="学生" />
+  </main>
+</Layout>
